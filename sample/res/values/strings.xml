@@ -1,0 +1,8 @@
+<resources>
+
+    <string name="app_name">Image Uploader</string>
+    <string name="newphoto">Take New Photo</string>
+    <string name="oldphoto">Choose from Gallery</string>
+    <string name="choose">Please choose a photo.</string>
+
+</resources>
