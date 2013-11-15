@@ -139,14 +139,14 @@ public class ImageUploadEngine {
 		.setMessage(message)
 		.setIcon(icon);
 		mActivityManager.show(b, ImageUploadEngine.class.getName() + mIdentifier);
-		if(mFileCreator == null) {
-			mFileCreator = new DefaultImageFileCreator();
-		}
 	}
 	public void performCancel() {
 		mCallback.onCanceled(this);
 	}
 	public void performImageTake() {
+		if(mFileCreator == null) {
+			mFileCreator = new DefaultImageFileCreator();
+		}
 		try {
 			Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			File f = mFileCreator.createImageFile();
