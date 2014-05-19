@@ -15,23 +15,28 @@
  *******************************************************************************/
 package mobi.sherif.example.imageuploader;
 
+import java.io.File;
+
 import mobi.sherif.imageuploader.ImageUploadEngine;
 import mobi.sherif.imageuploader.ImageUploadEngine.ImageChooseCallback;
+import mobi.sherif.imageuploader.LoadingListener;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
-public class ImageUploaderActivity extends Activity implements ImageChooseCallback {
+public class ImageUploaderActivity extends Activity implements ImageChooseCallback, LoadingListener {
 	ImageUploadEngine uploadEngine;
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.choose);
-		uploadEngine = new ImageUploadEngine.Builder(this, savedInstanceState).build();
+		uploadEngine = new ImageUploadEngine.Builder(this, savedInstanceState).setLoadingListener(this).build();
 	}
 	
 	@Override
@@ -57,10 +62,21 @@ public class ImageUploaderActivity extends Activity implements ImageChooseCallba
 	@Override
 	public void onChosen(ImageUploadEngine engine, String path, boolean newPicture) {
 		((TextView)findViewById(R.id.textimage)).setText((newPicture?"New":"Existing") + ": " + path);
+		((ImageView)findViewById(R.id.image)).setImageURI(Uri.fromFile(new File(path)));
 	}
 
 	@Override
 	public void onError(ImageUploadEngine engine, Exception ex) {
 		((TextView)findViewById(R.id.textimage)).setText("Error: " + ex.getMessage());
+	}
+
+	@Override
+	public void onLoadingStarted() {
+		findViewById(R.id.progress).setVisibility(View.VISIBLE);
+	}
+
+	@Override
+	public void onLoadingDone() {
+		findViewById(R.id.progress).setVisibility(View.GONE);
 	}
 }

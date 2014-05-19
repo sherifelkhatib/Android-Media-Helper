@@ -4,12 +4,10 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.content.CursorLoader;
 import android.util.SparseArray;
 
 /**
@@ -38,8 +36,9 @@ public class ImageUploadEngine {
 		void onCanceled(ImageUploadEngine engine);
 		void onError(ImageUploadEngine engine, Exception ex);
 	}
-	
+
 	public static class Builder {
+		private LoadingListener loadinglistener;
 		private ImageChooseCallback callback;
 		private Bundle state;
 		private ActivityManager manager;
@@ -67,8 +66,9 @@ public class ImageUploadEngine {
 		 * @param callback The {@link ImageChooseCallback} instance that will receive callbacks
 		 * @see ImageChooseCallback
 		 */
-		public void setCallback(ImageChooseCallback callback) {
+		public Builder setCallback(ImageChooseCallback callback) {
 			this.callback = callback;
+			return this;
 		}
 		/**
 		 * @author Sherif elKhatib - shush
@@ -78,34 +78,53 @@ public class ImageUploadEngine {
 		 * @param filecreator The {@link ImageFileCreator} instance that will be used to create new files when needed
 		 * @see ImageFileCreator 
 		 */
-		public void setFileCreator(ImageFileCreator filecreator) {
+		public Builder setFileCreator(ImageFileCreator filecreator) {
 			this.filecreator = filecreator;
+			return this;
+		}
+		/**
+		 * @author Sherif elKhatib - shush
+		 * Optional function to set a Loading Listener. The {@link LoadingListener} instance will receive callbacks
+		 * for loading requests. If the engine needs to write to a file or read from a file, this will be notified.
+		 * @param callback The {@link LoadingListener} instance that will receive callbacks
+		 * @see setLoadingListener
+		 */
+		public Builder setLoadingListener(LoadingListener listener) {
+			this.loadinglistener = listener;
+			return this;
 		}
 		public ImageUploadEngine build() {
 			if(callback == null) {
 				callback = manager.getCallback();
 			}
-			return new ImageUploadEngine(state, manager, callback, filecreator);
+			return new ImageUploadEngine(state, manager, callback, filecreator, loadinglistener);
 		}
 	}
-	
+
 	private int mIdentifier;
 	private String mCurrentPhotoPath;
 	private boolean mPending;
 	private ActivityManager mActivityManager;
 	private ImageFileCreator mFileCreator;
 	private ImageChooseCallback mCallback;
+	private LoadingListener mLoadListener;
 
 	private ImageUploadEngine(Bundle state, ActivityManager manager, ImageChooseCallback callback, ImageFileCreator filecreator) {
+		this(state, manager, callback, filecreator, null);
+	}
+	private ImageUploadEngine(Bundle state, ActivityManager manager, ImageChooseCallback callback, ImageFileCreator filecreator, LoadingListener listener) {
 		mActivityManager = manager;
 		mCallback = callback;
 		mFileCreator = filecreator;
+		if(mFileCreator == null) {
+			mFileCreator = new DefaultImageFileCreator();
+		}
 		if(state != null) {
 			int thecount = state.getInt(STATE_COUNT, 0);
 			if(thecount > count) {
 				count = thecount;
 			}
-			
+
 			mIdentifier = state.getInt(STATE_ID, 0);
 			mCurrentPhotoPath = state.getString(STATE_PHOTOPATH, null);
 			mPending = state.getBoolean(STATE_PENDING, false);
@@ -115,6 +134,7 @@ public class ImageUploadEngine {
 			mCurrentPhotoPath = null;
 			mPending = false;
 		}
+		mLoadListener = listener;
 		mInstances.put(mIdentifier, this);
 	}
 	protected static ImageUploadEngine get(int identifier) {
@@ -144,9 +164,6 @@ public class ImageUploadEngine {
 		mCallback.onCanceled(this);
 	}
 	public void performImageTake() {
-		if(mFileCreator == null) {
-			mFileCreator = new DefaultImageFileCreator();
-		}
 		try {
 			Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			File f = mFileCreator.createImageFile();
@@ -183,8 +200,27 @@ public class ImageUploadEngine {
 		case LOADPICTURE:
 			switch(resultCode) {
 			case android.app.Activity.RESULT_OK:
-				mCurrentPhotoPath = getPath(data.getData());
-				mCallback.onChosen(this, mCurrentPhotoPath, false);
+				
+		        Uri imageUri = data.getData();
+		        new ImageLoadTask(mActivityManager.getContext(), mFileCreator) {
+		        	protected void onPreExecute() {
+		        		if(mLoadListener != null)
+		        			mLoadListener.onLoadingStarted();
+		        	};
+		        	@Override
+		        	protected void onPostExecute(String result) {
+		        		super.onPostExecute(result);
+		        		if(mLoadListener != null)
+		        			mLoadListener.onLoadingDone();
+		        		if(result != null) {
+		        			mCurrentPhotoPath = result;
+		        		}
+						if(mCurrentPhotoPath != null)
+							mCallback.onChosen(ImageUploadEngine.this, mCurrentPhotoPath, false);
+						else
+							mCallback.onError(ImageUploadEngine.this, mException!=null?mException:new Exception("Unable to extract selected image."));
+		        	}
+		        }.execute(imageUri);
 				break;
 			case android.app.Activity.RESULT_CANCELED:
 				mCallback.onCanceled(this);
@@ -204,15 +240,5 @@ public class ImageUploadEngine {
 		default:
 			return false;
 		}
-	}
-	
-	/*	Private Methods	*/
-	private String getPath(Uri uri) {
-		String[] projection = { MediaStore.Images.Media.DATA };
-		CursorLoader cl = new CursorLoader(mActivityManager.getContext(), uri, projection, null, null, null);
-		Cursor cursor = cl.loadInBackground();
-		int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-		cursor.moveToFirst();
-		return cursor.getString(column_index);
 	}
 }

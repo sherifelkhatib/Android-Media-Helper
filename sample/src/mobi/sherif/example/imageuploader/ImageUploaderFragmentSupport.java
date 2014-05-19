@@ -15,25 +15,30 @@
  *******************************************************************************/
 package mobi.sherif.example.imageuploader;
 
+import java.io.File;
+
 import mobi.sherif.imageuploader.ImageUploadEngine;
+import mobi.sherif.imageuploader.LoadingListener;
 import mobi.sherif.imageuploader.ImageUploadEngine.ImageChooseCallback;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
-public class ImageUploaderFragmentSupport extends Fragment implements ImageChooseCallback {
+public class ImageUploaderFragmentSupport extends Fragment implements ImageChooseCallback, LoadingListener {
 	ImageUploadEngine uploadEngine;
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		uploadEngine = new ImageUploadEngine.Builder(this, savedInstanceState).build();
+		uploadEngine = new ImageUploadEngine.Builder(this, savedInstanceState).setLoadingListener(this).build();
 	}
 	
 	@Override
@@ -55,17 +60,32 @@ public class ImageUploaderFragmentSupport extends Fragment implements ImageChoos
 	@Override
 	public void onChosen(ImageUploadEngine engine, String path, boolean newPicture) {
 		mTextView.setText((newPicture?"New":"Existing") + ": " + path);
+		mImageView.setImageURI(Uri.fromFile(new File(path)));
 	}
 
 	@Override
 	public void onError(ImageUploadEngine engine, Exception ex) {
 		mTextView.setText("Error: " + ex.getMessage());
 	}
+
+	@Override
+	public void onLoadingStarted() {
+		mProgress.setVisibility(View.VISIBLE);
+	}
+
+	@Override
+	public void onLoadingDone() {
+		mProgress.setVisibility(View.GONE);
+	}
 	
+	ImageView mImageView;
 	TextView mTextView;
+	View mProgress;
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.choose, null);
+		mProgress = v.findViewById(R.id.progress);
+		mImageView = (ImageView) v.findViewById(R.id.image);
 		mTextView = (TextView) v.findViewById(R.id.textimage);
 		v.findViewById(R.id.button).setOnClickListener(new OnClickListener() {
 			@Override
