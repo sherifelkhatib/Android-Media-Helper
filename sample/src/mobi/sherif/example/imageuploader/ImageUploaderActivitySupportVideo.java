@@ -15,29 +15,32 @@
  *******************************************************************************/
 package mobi.sherif.example.imageuploader;
 
-import java.io.File;
-
 import mobi.sherif.imageuploader.MediaEngine;
 import android.content.Intent;
-import android.net.Uri;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
+import android.support.v4.app.FragmentActivity;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 /**
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
-public class ImageUploaderFragmentSupport extends Fragment implements MediaEngine.MediaChooseCallback, MediaEngine.LoadingListener {
+public class ImageUploaderActivitySupportVideo extends FragmentActivity implements MediaEngine.MediaChooseCallback, MediaEngine.LoadingListener {
 	MediaEngine uploadEngine;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.choosevideo);
 		uploadEngine = new MediaEngine.Builder(this, savedInstanceState).setLoadingListener(this).build();
+		( (VideoView) findViewById(R.id.video) ).setOnPreparedListener(new OnPreparedListener() {
+			@Override
+			public void onPrepared(MediaPlayer mp) {
+				mp.start();
+			}
+		});
 	}
 
 	@Override
@@ -49,6 +52,10 @@ public class ImageUploaderFragmentSupport extends Fragment implements MediaEngin
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (uploadEngine.onActivityResult(requestCode, resultCode, data)) return;
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	public void onChoose(View v) {
+		uploadEngine.performVideoAsk(R.string.app_name, R.string.newvideo, R.string.oldvideo, R.string.choosevideo, R.drawable.ic_launcher);
 	}
 
 	@Override
@@ -65,44 +72,25 @@ public class ImageUploaderFragmentSupport extends Fragment implements MediaEngin
 	}
 
 	public void onCanceled(MediaEngine engine) {
-		mTextView.setText("Canceled");
+		( (TextView) findViewById(R.id.textvideo) ).setText("Canceled");
 	}
 
 	public void onChosen(MediaEngine engine, String path, boolean newPicture) {
-		mTextView.setText( ( newPicture ? "New" : "Existing" ) + ": " + path);
-		mImageView.setImageURI(Uri.fromFile(new File(path)));
+		( (TextView) findViewById(R.id.textvideo) ).setText( ( newPicture ? "New" : "Existing" ) + ": " + path);
+		( (VideoView) findViewById(R.id.video) ).setVideoPath(path);
 	}
 
 	public void onError(MediaEngine engine, Exception ex) {
-		mTextView.setText("Error: " + ex.getMessage());
+		( (TextView) findViewById(R.id.textvideo) ).setText("Error: " + ex.getMessage());
 	}
 
 	@Override
 	public void onLoadingStarted( ) {
-		mProgress.setVisibility(View.VISIBLE);
+		findViewById(R.id.progress).setVisibility(View.VISIBLE);
 	}
 
 	@Override
 	public void onLoadingDone( ) {
-		mProgress.setVisibility(View.GONE);
-	}
-
-	ImageView mImageView;
-	TextView mTextView;
-	View mProgress;
-
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View v = inflater.inflate(R.layout.choose, container, false);
-		mProgress = v.findViewById(R.id.progress);
-		mImageView = (ImageView) v.findViewById(R.id.image);
-		mTextView = (TextView) v.findViewById(R.id.textimage);
-		v.findViewById(R.id.button).setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				uploadEngine.performImageAsk(R.string.app_name, R.string.newphoto, R.string.oldphoto, R.string.choose, R.drawable.ic_launcher);
-			}
-		});
-		return v;
+		findViewById(R.id.progress).setVisibility(View.GONE);
 	}
 }

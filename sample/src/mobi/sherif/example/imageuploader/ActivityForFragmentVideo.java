@@ -22,13 +22,13 @@ import android.os.Bundle;
 /**
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
-public class ActivityForFragment extends Activity {
+public class ActivityForFragmentVideo extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_fragment);
 		if (savedInstanceState == null) {
 			FragmentTransaction ft = getFragmentManager().beginTransaction();
-			ft.add(R.id.container, new ImageUploaderFragment());
+			ft.add(R.id.container, new ImageUploaderFragmentVideo());
 			ft.commit();
 		}
 	}

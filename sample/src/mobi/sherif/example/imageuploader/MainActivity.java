@@ -24,25 +24,40 @@ import android.view.View;
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
 public class MainActivity extends Activity {
-
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 	}
-	
+
 	public void onActivity(View v) {
 		startActivity(new Intent(this, ImageUploaderActivity.class));
 	}
-	
+
 	public void onActivitySupport(View v) {
 		startActivity(new Intent(this, ImageUploaderActivitySupport.class));
 	}
-	
+
 	public void onFragment(View v) {
 		startActivity(new Intent(this, ActivityForFragment.class));
 	}
-	
+
 	public void onFragmentSupport(View v) {
 		startActivity(new Intent(this, ActivityForFragmentSupport.class));
+	}
+
+	public void onActivityVideo(View v) {
+		startActivity(new Intent(this, ImageUploaderActivityVideo.class));
+	}
+
+	public void onActivitySupportVideo(View v) {
+		startActivity(new Intent(this, ImageUploaderActivitySupportVideo.class));
+	}
+
+	public void onFragmentVideo(View v) {
+		startActivity(new Intent(this, ActivityForFragmentVideo.class));
+	}
+
+	public void onFragmentSupportVideo(View v) {
+		startActivity(new Intent(this, ActivityForFragmentSupportVideo.class));
 	}
 }

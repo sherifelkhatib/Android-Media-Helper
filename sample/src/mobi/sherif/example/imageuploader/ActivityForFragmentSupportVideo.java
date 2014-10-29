@@ -15,20 +15,20 @@
  *******************************************************************************/
 package mobi.sherif.example.imageuploader;
 
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 
 /**
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
-public class ActivityForFragment extends Activity {
+public class ActivityForFragmentSupportVideo extends FragmentActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_fragment);
 		if (savedInstanceState == null) {
-			FragmentTransaction ft = getFragmentManager().beginTransaction();
-			ft.add(R.id.container, new ImageUploaderFragment());
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+			ft.add(R.id.container, new ImageUploaderFragmentSupportVideo());
 			ft.commit();
 		}
 	}

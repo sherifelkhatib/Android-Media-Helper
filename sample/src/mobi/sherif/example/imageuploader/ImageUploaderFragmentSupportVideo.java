@@ -15,24 +15,23 @@
  *******************************************************************************/
 package mobi.sherif.example.imageuploader;
 
-import java.io.File;
-
 import mobi.sherif.imageuploader.MediaEngine;
 import android.content.Intent;
-import android.net.Uri;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 /**
  * @author Sherif elKhatib (sherif.elkhatib[at]gmail[dot]com)
  */
-public class ImageUploaderFragmentSupport extends Fragment implements MediaEngine.MediaChooseCallback, MediaEngine.LoadingListener {
+public class ImageUploaderFragmentSupportVideo extends Fragment implements MediaEngine.MediaChooseCallback, MediaEngine.LoadingListener {
 	MediaEngine uploadEngine;
 
 	public void onCreate(Bundle savedInstanceState) {
@@ -70,7 +69,7 @@ public class ImageUploaderFragmentSupport extends Fragment implements MediaEngin
 
 	public void onChosen(MediaEngine engine, String path, boolean newPicture) {
 		mTextView.setText( ( newPicture ? "New" : "Existing" ) + ": " + path);
-		mImageView.setImageURI(Uri.fromFile(new File(path)));
+		mVideoView.setVideoPath(path);
 	}
 
 	public void onError(MediaEngine engine, Exception ex) {
@@ -87,20 +86,26 @@ public class ImageUploaderFragmentSupport extends Fragment implements MediaEngin
 		mProgress.setVisibility(View.GONE);
 	}
 
-	ImageView mImageView;
+	VideoView mVideoView;
 	TextView mTextView;
 	View mProgress;
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		View v = inflater.inflate(R.layout.choose, container, false);
+		View v = inflater.inflate(R.layout.choosevideo, container, false);
 		mProgress = v.findViewById(R.id.progress);
-		mImageView = (ImageView) v.findViewById(R.id.image);
-		mTextView = (TextView) v.findViewById(R.id.textimage);
+		mVideoView = (VideoView) v.findViewById(R.id.video);
+		mTextView = (TextView) v.findViewById(R.id.textvideo);
 		v.findViewById(R.id.button).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				uploadEngine.performImageAsk(R.string.app_name, R.string.newphoto, R.string.oldphoto, R.string.choose, R.drawable.ic_launcher);
+				uploadEngine.performVideoAsk(R.string.app_name, R.string.newvideo, R.string.oldvideo, R.string.choosevideo, R.drawable.ic_launcher);
+			}
+		});
+		( (VideoView) v.findViewById(R.id.video) ).setOnPreparedListener(new OnPreparedListener() {
+			@Override
+			public void onPrepared(MediaPlayer mp) {
+				mp.start();
 			}
 		});
 		return v;

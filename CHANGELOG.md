@@ -1,6 +1,12 @@
 Change Log
 ===
 
+v1.0.2 *(19.05.2014)*
+---
+ * Third Build:
+	- Video supported
+
+
 v1.0.1 *(19.05.2014)*
 ---
  * Second Build:

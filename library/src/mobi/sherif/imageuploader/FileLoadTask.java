@@ -5,30 +5,42 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import mobi.sherif.imageuploader.MediaEngine.FileCreator;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.webkit.MimeTypeMap;
 
-class ImageLoadTask extends AsyncTask<Uri, Void, String> {
+class FileLoadTask extends AsyncTask<Uri, Void, String> {
 	Context mContext;
-	ImageFileCreator mFileCreator;
+	FileCreator mFileCreator;
 	Exception mException;
-	public ImageLoadTask(Context cxt, ImageFileCreator filecreator) {
+
+	public FileLoadTask(Context cxt, FileCreator filecreator) {
 		mContext = cxt;
 		mFileCreator = filecreator;
 	}
+
 	@Override
 	protected String doInBackground(Uri... params) {
-		if(params == null || params.length == 0) return null;
+		if (params == null || params.length == 0) return null;
 		Uri uri = params[0];
 		File f = null;
 		try {
-			f = mFileCreator.createImageFile();
+			ContentResolver cR = mContext.getContentResolver();
+			MimeTypeMap mime = MimeTypeMap.getSingleton();
+			// String type = mime.getExtensionFromMimeType(cR.getType(uri));
+			if (cR.getType(uri) != null && mime.getExtensionFromMimeType(cR.getType(uri)) != null) {
+				f = mFileCreator.createFile(mime.getExtensionFromMimeType(cR.getType(uri)));
+			} else {
+				f = mFileCreator.createFile(null);
+			}
 			InputStream is = mContext.getContentResolver().openInputStream(uri);
 			OutputStream os = new FileOutputStream(f);
 			byte[] buffer = new byte[1024];
 			int len;
-			while ((len = is.read(buffer)) != -1) {
+			while ( ( len = is.read(buffer) ) != -1) {
 				os.write(buffer, 0, len);
 			}
 			os.close();
@@ -37,7 +49,7 @@ class ImageLoadTask extends AsyncTask<Uri, Void, String> {
 		} catch (Exception e) {
 			e.printStackTrace();
 			mException = e;
-			if(f != null) {
+			if (f != null) {
 				try {
 					f.delete();
 				} catch (Exception e2) {
@@ -46,5 +58,4 @@ class ImageLoadTask extends AsyncTask<Uri, Void, String> {
 		}
 		return null;
 	}
-
 }

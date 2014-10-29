@@ -26,7 +26,7 @@ public class ActivityForFragmentSupport extends FragmentActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_fragment);
-		if(savedInstanceState == null) {
+		if (savedInstanceState == null) {
 			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 			ft.add(R.id.container, new ImageUploaderFragmentSupport());
 			ft.commit();

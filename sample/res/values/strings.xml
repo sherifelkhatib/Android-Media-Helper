@@ -1,8 +1,12 @@
 <resources>
 
-    <string name="app_name">Image Uploader</string>
+    <string name="app_name">Media Engine</string>
     <string name="newphoto">Take New Photo</string>
     <string name="oldphoto">Choose from Gallery</string>
     <string name="choose">Please choose a photo.</string>
+    
+    <string name="newvideo">Take New Video</string>
+    <string name="oldvideo">Choose from Gallery</string>
+    <string name="choosevideo">Please choose a video.</string>
 
 </resources>

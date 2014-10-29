@@ -1,21 +1,22 @@
-# ![Logo](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/sample/res/drawable-mdpi/ic_launcher.png) Image Helper for Android
+# ![Logo](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/sample/res/drawable-mdpi/ic_launcher.png) Media Helper for Android
 
-This project aims to provide an easy-to-user instrument for android developers to use when they need the user to select an image on their android phone and upload it.
+This project aims to provide an easy-to-use instrument for android developers to use when they need the user to select an image or video on their android phone and upload it.
 If the process has any errors on specific phones, these should be handled inside the library to provide the same user experience on all phones.
 
 ![Screenshot](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/screenshot1.png)
 
 ## Features
  * Allow user to choose Photo from Gallery or Take new Photo.
+ * Allow user to choose Video from Gallery or Take new Video.
  
 Android 2.2+ support
 
 ## Downloads
- * **[android-image-helper-1.0.0.jar](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-1.0.0.jar)** (library; contains *.class files)
- * **[android-image-helper-1.0.0-with-sources.jar](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-1.0.0-withsources.jar)** (library with sources inside; contains *.class and *.java files)<br />_Prefer to use this JAR so you can see Java docs in Eclipse tooltips._
- * **[android-image-helper-sample-1.0.0.apk](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-sample-1.0.0.apk)** (sample application)
+ * **[android-image-helper-1.0.2.jar](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-1.0.2.jar)** (library; contains *.class files)
+ * **[android-image-helper-1.0.2-with-sources.jar](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-1.0.2-withsources.jar)** (library with sources inside; contains *.class and *.java files)<br />_Prefer to use this JAR so you can see Java docs in Eclipse tooltips._
+ * **[android-image-helper-sample-1.0.2.apk](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-sample-1.0.0.apk)** (sample application)
 
-Latest snapshot of the library - **[here](https://github.com/sherifelkhatib/Android-Image-Helper/tree/master/sample/libs)**
+Latest snapshot of the library - **[here](https://github.com/sherifelkhatib/Android-Image-Helper/tree/master/downloads)**
 
 ### [Changelog](https://github.com/sherifelkhatib/Android-Image-Helper/blob/master/CHANGELOG.md)
 
@@ -29,17 +30,17 @@ Latest snapshot of the library - **[here](https://github.com/sherifelkhatib/Andr
 #### 1. Include library
 
 **Manual:**
- * [Download JAR](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-1.0.0-withsources.jar)
+ * [Download JAR](https://github.com/sherifelkhatib/Android-Image-Helper/raw/master/downloads/android-image-helper-1.0.2-withsources.jar)
  * Put the JAR in the **libs** subfolder of your Android project
 
 #### 2. Usage
 Here is the minimal setup needed. This could be used in an Activity, SupportActivity, Fragment, or SupportFragment.
 ``` java
-public class ImageUploaderActivity extends Activity implements ImageChooseCallback {
-	ImageUploadEngine uploadEngine;
+public class ImageUploaderActivity extends Activity implements MediaEngine.ImageChooseCallback {
+	MediaEngine uploadEngine;
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		uploadEngine = new ImageUploadEngine.Builder(this, savedInstanceState).build();
+		uploadEngine = new MediaEngine.Builder(this, savedInstanceState).build();
 		//...
 		someButton.setOnClickListener(new OnClickListener() {
 			@Override
