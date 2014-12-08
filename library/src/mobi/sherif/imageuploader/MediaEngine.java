@@ -1,11 +1,18 @@
 package mobi.sherif.imageuploader;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 
 import mobi.sherif.imageuploader.MediaEngine.FileCreator.FileCreationException;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory.Options;
+import android.graphics.Point;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -28,6 +35,8 @@ public class MediaEngine {
 		private Bundle state;
 		private ActivityManager manager;
 		private FileCreator filecreator;
+		private int maxWidth = -1;
+		private int maxHeight = -1;
 
 		public Builder(android.app.Activity activity, Bundle state) {
 			this.manager = ActivityManager.StaticBuilder.build(activity);
@@ -50,14 +59,15 @@ public class MediaEngine {
 		}
 
 		/**
-		 * @author Sherif elKhatib - shush Optional function to set the
-		 *         callback. However, note that if this is not called, the
-		 *         callback will be the activity or fragment passed in the
-		 *         constructor of this {@link Builder} instance.
+		 * Optional function to set the callback. However, note that if this is
+		 * not called, the callback will be the activity or fragment passed in
+		 * the constructor of this {@link Builder} instance.
+		 * 
 		 * @param callback
 		 *            The {@link MediaChooseCallback} instance that will receive
 		 *            callbacks
 		 * @see MediaChooseCallback
+		 * @author Sherif elKhatib - shush
 		 */
 		public Builder setCallback(MediaChooseCallback callback) {
 			this.callback = callback;
@@ -65,18 +75,18 @@ public class MediaEngine {
 		}
 
 		/**
-		 * @author Sherif elKhatib - shush Optional function to set the
-		 *         {@link FileCreator} instance. If this is not called, a
-		 *         default implementation will be used that saves images in
-		 *         folder named "Uploads" in the
-		 *         {@link Environment#DIRECTORY_PICTURES} folder. The names of
-		 *         the files will be "Upload_yyyyMMdd_HHmmss.jpg" where
-		 *         `yyyyMMdd_HHmmss` is replaced with the date using
-		 *         {@link SimpleDateFormat}.
+		 * Optional function to set the {@link FileCreator} instance. If this is
+		 * not called, a default implementation will be used that saves images
+		 * in folder named "Uploads" in the
+		 * {@link Environment#DIRECTORY_PICTURES} folder. The names of the files
+		 * will be "Upload_yyyyMMdd_HHmmss.jpg" where `yyyyMMdd_HHmmss` is
+		 * replaced with the date using {@link SimpleDateFormat}.
+		 * 
 		 * @param filecreator
 		 *            The {@link FileCreator} instance that will be used to
 		 *            create new files when needed
 		 * @see FileCreator
+		 * @author Sherif elKhatib - shush
 		 */
 		public Builder setFileCreator(FileCreator filecreator) {
 			this.filecreator = filecreator;
@@ -84,17 +94,49 @@ public class MediaEngine {
 		}
 
 		/**
-		 * @author Sherif elKhatib - shush Optional function to set a Loading
-		 *         Listener. The {@link LoadingListener} instance will receive
-		 *         callbacks for loading requests. If the engine needs to write
-		 *         to a file or read from a file, this will be notified.
-		 * @param callback
+		 * Optional function to set a Loading Listener. The
+		 * {@link LoadingListener} instance will receive callbacks for loading
+		 * requests. If the engine needs to write to a file or read from a file,
+		 * this will be notified.
+		 * 
+		 * @param listener
 		 *            The {@link LoadingListener} instance that will receive
 		 *            callbacks
 		 * @see setLoadingListener
+		 * @author Sherif elKhatib - shush
 		 */
 		public Builder setLoadingListener(LoadingListener listener) {
 			this.loadinglistener = listener;
+			return this;
+		}
+
+		/**
+		 * Optional function to set the maximum width of the taken photo. Please
+		 * note that this will not forbid the user from choosing/taking larger
+		 * photos but will actually resize the chose photo.
+		 * 
+		 * @param width
+		 *            The maximum width of the photo taken.
+		 * @author Sherif elKhatib - shush
+		 * @see #setMaxHeight(int)
+		 */
+		public Builder setMaxWidth(int width) {
+			this.maxWidth = width;
+			return this;
+		}
+
+		/**
+		 * Optional function to set the maximum height of the taken photo.
+		 * Please note that this will not forbid the user from choosing/taking
+		 * larger photos but will actually resize the chose photo.
+		 * 
+		 * @param height
+		 *            The maximum width of the photo taken.
+		 * @author Sherif elKhatib - shush
+		 * @see #setMaxWidth(int)
+		 */
+		public Builder setMaxHeight(int height) {
+			this.maxHeight = height;
 			return this;
 		}
 
@@ -102,7 +144,7 @@ public class MediaEngine {
 			if (callback == null) {
 				callback = manager.getCallback();
 			}
-			return new MediaEngine(state, manager, callback, filecreator, loadinglistener);
+			return new MediaEngine(state, manager, callback, filecreator, loadinglistener, maxWidth, maxHeight);
 		}
 	}
 
@@ -290,6 +332,38 @@ public class MediaEngine {
 					};
 
 					@Override
+					protected String doInBackground(Uri... params) {
+						String result = super.doInBackground(params);
+						if (mDimensions.x != -1 || mDimensions.y != -1) {
+							Options opts = new Options();
+							opts.inJustDecodeBounds = true;
+							BitmapFactory.decodeFile(result, opts);
+							int height = opts.outHeight;
+							int width = opts.outWidth;
+							int reqWidth = mDimensions.x == -1 ? width : mDimensions.x;
+							int reqHeight = mDimensions.y == -1 ? height : mDimensions.y;
+							// String imageType = opts.outMimeType;
+							int inSampleSize = 1;
+							while (height > reqHeight || width > reqWidth) {
+								inSampleSize *= 2;
+								width = width / 2;
+								height = height / 2;
+							}
+							if (inSampleSize > 1) {
+								opts.inJustDecodeBounds = false;
+								opts.inSampleSize = inSampleSize;
+								Bitmap bmp = BitmapFactory.decodeFile(result, opts);
+								try {
+									bmp.compress(CompressFormat.JPEG, 100, new FileOutputStream(new File(result)));
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+						return result;
+					}
+
+					@Override
 					protected void onPostExecute(String result) {
 						super.onPostExecute(result);
 						if (mLoadListener != null) mLoadListener.onLoadingDone();
@@ -324,15 +398,61 @@ public class MediaEngine {
 		case TAKEPICTURE:
 			switch (resultCode) {
 			case android.app.Activity.RESULT_OK:
-				Result r = new Result();
-				r.engine = MediaEngine.this;
-				r.error = false;
-				r.canceled = false;
-				r.path = mCurrentPhotoPath;
-				r.exception = null;
-				r.type = TYPE_IMAGE;
-				r.newfile = true;
-				mCallback.onResult(MediaEngine.this, r);
+					new AsyncTask<String, Void, String>() {
+						protected void onPreExecute( ) {
+							if (mLoadListener != null) mLoadListener.onLoadingStarted();
+						};
+
+						@Override
+						protected String doInBackground(String... params) {
+							String result = params[0];
+							if (mDimensions.x != -1 || mDimensions.y != -1) {
+								Options opts = new Options();
+								opts.inJustDecodeBounds = true;
+								BitmapFactory.decodeFile(result, opts);
+								int height = opts.outHeight;
+								int width = opts.outWidth;
+								int reqWidth = mDimensions.x == -1 ? width : mDimensions.x;
+								int reqHeight = mDimensions.y == -1 ? height : mDimensions.y;
+								// String imageType = opts.outMimeType;
+								int inSampleSize = 1;
+								while (height > reqHeight || width > reqWidth) {
+									inSampleSize *= 2;
+									width = width / 2;
+									height = height / 2;
+								}
+								if (inSampleSize > 1) {
+									opts.inJustDecodeBounds = false;
+									opts.inSampleSize = inSampleSize;
+									Bitmap bmp = BitmapFactory.decodeFile(result, opts);
+									try {
+										bmp.compress(CompressFormat.JPEG, 100, new FileOutputStream(new File(result)));
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							}
+							return result;
+						}
+
+						@Override
+						protected void onPostExecute(String result) {
+							super.onPostExecute(result);
+							if (mLoadListener != null) mLoadListener.onLoadingDone();
+							if (result != null) {
+								mCurrentPhotoPath = result;
+							}
+							Result r = new Result();
+							r.engine = MediaEngine.this;
+							r.error = false;
+							r.canceled = false;
+							r.path = mCurrentPhotoPath;
+							r.exception = null;
+							r.type = TYPE_IMAGE;
+							r.newfile = true;
+							mCallback.onResult(MediaEngine.this, r);
+						}
+					}.execute(mCurrentPhotoPath);
 				break;
 			}
 			return true;
@@ -421,12 +541,13 @@ public class MediaEngine {
 	private FileCreator mFileCreator;
 	private MediaChooseCallback mCallback;
 	private LoadingListener mLoadListener;
+	private Point mDimensions;
 
-	private MediaEngine(Bundle state, ActivityManager manager, MediaChooseCallback callback, FileCreator filecreator) {
-		this(state, manager, callback, filecreator, null);
+	private MediaEngine(Bundle state, ActivityManager manager, MediaChooseCallback callback, FileCreator filecreator, int maxWidth, int maxHeight) {
+		this(state, manager, callback, filecreator, null, maxWidth, maxHeight);
 	}
 
-	private MediaEngine(Bundle state, ActivityManager manager, MediaChooseCallback callback, FileCreator filecreator, LoadingListener listener) {
+	private MediaEngine(Bundle state, ActivityManager manager, MediaChooseCallback callback, FileCreator filecreator, LoadingListener listener, int maxWidth, int maxHeight) {
 		mActivityManager = manager;
 		mCallback = callback;
 		mFileCreator = filecreator;
@@ -444,6 +565,7 @@ public class MediaEngine {
 			mPending = false;
 		}
 		mLoadListener = listener;
+		mDimensions = new Point(maxWidth, maxHeight);
 		mInstances.put(mIdentifier, this);
 	}
 
@@ -467,15 +589,6 @@ public class MediaEngine {
 				takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
 				mPending = true;
 				mActivityManager.startActivityForResult(takePictureIntent, TAKEPICTURE);
-			} catch (FileCreationException e) {
-				Result r = new Result();
-				r.engine = this;
-				r.error = true;
-				r.canceled = false;
-				r.path = null;
-				r.type = mType;
-				r.exception = e;
-				mCallback.onResult(MediaEngine.this, r);
 			} catch (Exception e) {
 				Result r = new Result();
 				r.engine = this;
@@ -495,15 +608,6 @@ public class MediaEngine {
 				takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
 				mPending = true;
 				mActivityManager.startActivityForResult(takePictureIntent, TAKEVIDEO);
-			} catch (FileCreationException e) {
-				Result r = new Result();
-				r.engine = this;
-				r.error = true;
-				r.canceled = false;
-				r.path = null;
-				r.exception = e;
-				r.type = mType;
-				mCallback.onResult(MediaEngine.this, r);
 			} catch (Exception e) {
 				Result r = new Result();
 				r.engine = this;

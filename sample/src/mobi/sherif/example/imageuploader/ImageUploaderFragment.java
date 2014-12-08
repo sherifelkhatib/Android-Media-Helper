@@ -37,7 +37,7 @@ public class ImageUploaderFragment extends Fragment implements MediaEngine.Media
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		uploadEngine = new MediaEngine.Builder(this, savedInstanceState).setLoadingListener(this).build();
+		uploadEngine = new MediaEngine.Builder(this, savedInstanceState).setLoadingListener(this).setMaxHeight(100).build();
 	}
 
 	@Override
